@@ -37,7 +37,7 @@ class QuizActivity : AppCompatActivity() {
             try {
                 // Build request
                 val request = Request.Builder()
-                    .url("http://192.168.1.6/admin/api/read.php?id_kategori=$categoryId")
+                    .url("http://${getString(R.string.ip_address)}/admin/api/read.php?id_kategori=$categoryId")
                     .build()
                 // Execute request
                 @Suppress("BlockingMethodInNonBlockingContext") val res =
@@ -118,7 +118,7 @@ class QuizActivity : AppCompatActivity() {
     }
 
     private fun onOptionClicked(radioButton: RadioButton) {
-        var optionSound = when (radioButton.text) {
+        val optionSound = when (radioButton.text) {
             mQuestions[mQuestionPosition - 1].answer -> MediaPlayer.create(this, R.raw.correct)
             else -> MediaPlayer.create(this, R.raw.wrong)
 
@@ -129,13 +129,10 @@ class QuizActivity : AppCompatActivity() {
             vocalSound.release()
         }
 
-        if (optionSound.isPlaying) {
-            optionSound.reset()
-        }
+        if (optionSound.isPlaying) optionSound.reset()
 
         // Check if correct answer
         when (radioButton.text) {
-
             mQuestions[mQuestionPosition - 1].answer -> {
                 optionSound.start()
                 mCorrectCount++
