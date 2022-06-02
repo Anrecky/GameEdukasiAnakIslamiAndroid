@@ -62,8 +62,14 @@ class LearnActivity : AppCompatActivity(), RecyclerViewClickListener {
                 if (res != null) {
                     try {
                         // Parse result string JSON to data class
-                        learnAdapter.setDataList(
-                            Json.decodeFromString<List<Question>>(res).sortedBy { it.answer })
+                            if(categoryId == 1){
+                                learnAdapter.setDataList(
+                                    Json.decodeFromString<List<Question>>(res).sortedBy { it.answer.toInt() })
+                            }else{
+                                learnAdapter.setDataList(
+                                    Json.decodeFromString<List<Question>>(res).sortedBy { it.answer })
+                            }
+
                         withContext(Dispatchers.Main) {
                             learnAdapter.notifyDataSetChanged()
                         }
