@@ -28,7 +28,10 @@ class LearnActivity : AppCompatActivity(), RecyclerViewClickListener {
 
         learnType = intent.getStringExtra("learnType").toString()
         val learnTitle = findViewById<TextView>(R.id.learnTitle)
-        learnTitle.text = learnType
+        learnTitle.text = when(learnType){
+            "Angka" -> getString(R.string.learn_number_title)
+            else -> getString(R.string.learn_letter_title)
+        }
 
         recyclerView = findViewById(R.id.recyclerView)
 
