@@ -4,6 +4,7 @@ import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
+import android.widget.TextView
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -18,8 +19,7 @@ class LearnActivity : AppCompatActivity(), RecyclerViewClickListener {
 
     private var learnType: String = ""
     private lateinit var recyclerView: RecyclerView
-    private lateinit var learnAdapater: LearnAdapter
-    private var mQuestions: List<Question> = emptyList()
+    private lateinit var learnAdapter: LearnAdapter
     private val client: OkHttpClient = OkHttpClient()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -27,6 +27,8 @@ class LearnActivity : AppCompatActivity(), RecyclerViewClickListener {
         setContentView(R.layout.activity_learn)
 
         learnType = intent.getStringExtra("learnType").toString()
+        val learnTitle = findViewById<TextView>(R.id.learnTitle)
+        learnTitle.text = learnType
 
         recyclerView = findViewById(R.id.recyclerView)
 
@@ -36,35 +38,31 @@ class LearnActivity : AppCompatActivity(), RecyclerViewClickListener {
             GridLayoutManager(applicationContext, 4)
         }
 
-        learnAdapater = LearnAdapter(applicationContext)
-        recyclerView.adapter = learnAdapater
-        learnAdapater.listener = this
-        // Get fetchQuestions job
-
+        learnAdapter = LearnAdapter(applicationContext)
+        recyclerView.adapter = learnAdapter
+        learnAdapter.listener = this
 
         lifecycleScope.launch(Dispatchers.IO) {
-            var categoryId = when (learnType) {
+            val categoryId = when (learnType) {
                 "Angka" -> 1
                 else -> 2
             }
             try {
                 // Build request
                 val request = Request.Builder()
-                    .url("http://192.168.1.6/admin/api/read.php?id_kategori=$categoryId")
+                    .url("http://${getString(R.string.ip_address)}/admin/api/read.php?id_kategori=$categoryId")
                     .build()
                 // Execute request
                 @Suppress("BlockingMethodInNonBlockingContext")
                 val res = client.newCall(request).execute().body?.string()
 
-
                 if (res != null) {
                     try {
                         // Parse result string JSON to data class
-//                    mQuestions = Json.decodeFromString(res)
-                        learnAdapater.setDataList(
+                        learnAdapter.setDataList(
                             Json.decodeFromString<List<Question>>(res).sortedBy { it.answer })
-                        withContext(Dispatchers.Main){
-                            learnAdapater.notifyDataSetChanged()
+                        withContext(Dispatchers.Main) {
+                            learnAdapter.notifyDataSetChanged()
                         }
 
                     } catch (err: Error) {
@@ -78,37 +76,6 @@ class LearnActivity : AppCompatActivity(), RecyclerViewClickListener {
             }
         }
     }
-
-//    private fun fetchQuestions(categoryId: Int): Job = lifecycleScope.launch {
-//
-//        withContext(Dispatchers.IO) {
-//            try {
-//                // Build request
-//                val request = Request.Builder()
-//                    .url("http://192.168.1.6/admin/api/read.php?id_kategori=$categoryId")
-//                    .build()
-//                // Execute request
-//                @Suppress("BlockingMethodInNonBlockingContext") val res =
-//                    client.newCall(request).execute().body?.string()
-//
-//                if (res != null) {
-//                    try {
-//                        // Parse result string JSON to data class
-////                    mQuestions = Json.decodeFromString(res)
-//                        learnAdapater.setDataList(Json.decodeFromString<List<Question>>(res).sortedBy { it.answer })
-//                    } catch (err: Error) {
-//                        print("Error when parsing JSON: " + err.localizedMessage)
-//                    }
-//                } else {
-//                    print("Error: Get request returned no response")
-//                }
-//            } catch (err: Error) {
-//                print("Error when executing get request: " + err.localizedMessage)
-//            }
-//        }
-//
-//    }
-
 
     override fun onItemClicked(view: View, menuItem: Question) {
 
