@@ -18,10 +18,10 @@ class AboutFragment : Fragment() {
     ): View {
         // Inflate the layout for this fragment
         root = inflater.inflate(R.layout.fragment_about, container, false)
-        val toolbar = root.findViewById<MaterialToolbar>(R.id.topAppBar)
-        (activity as AppCompatActivity).setSupportActionBar(toolbar)
-        (activity as AppCompatActivity).supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        (activity as AppCompatActivity).supportActionBar?.setHomeButtonEnabled(true)
+//        val toolbar = root.findViewById<MaterialToolbar>(R.id.topAppBar)
+//        (activity as AppCompatActivity).setSupportActionBar(toolbar)
+//        (activity as AppCompatActivity).supportActionBar?.setDisplayHomeAsUpEnabled(true)
+//        (activity as AppCompatActivity).supportActionBar?.setHomeButtonEnabled(true)
 
         return root
     }
