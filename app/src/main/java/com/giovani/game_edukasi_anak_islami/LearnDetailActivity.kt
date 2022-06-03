@@ -41,7 +41,7 @@ class LearnDetailActivity : AppCompatActivity() {
         ArabicVocal("belajar_fa", "ف"),
         ArabicVocal("belajar_khof", "ق"),
         ArabicVocal("belajar_khaf", "ك"),
-        ArabicVocal("belajar_lam_alif", "ل"),
+        ArabicVocal("belajar_lam", "ل"),
         ArabicVocal("belajar_mim", "م"),
         ArabicVocal("belajar_nun", "ن"),
         ArabicVocal("belajar_haa", "هـ"),
