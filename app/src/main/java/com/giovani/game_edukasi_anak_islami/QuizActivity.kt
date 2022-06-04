@@ -7,21 +7,22 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.RadioButton
 import androidx.lifecycle.lifecycleScope
+import com.giovani.game_edukasi_anak_islami.data.ArabicVocal
 import com.giovani.game_edukasi_anak_islami.data.Question
+import com.giovani.game_edukasi_anak_islami.data.QuizResult
 import com.giovani.game_edukasi_anak_islami.databinding.ActivityQuizBinding
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import okhttp3.OkHttpClient
-import okhttp3.Request
+import okhttp3.*
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.RequestBody.Companion.toRequestBody
+import okio.IOException
+import org.json.JSONObject
 
 
 @SuppressLint("SetTextI18n")
 class QuizActivity : AppCompatActivity() {
-    internal data class ArabicVocal(val arabic: String, val rawInt: Int)
 
     private lateinit var binding: ActivityQuizBinding
     private lateinit var mGameTypes: String
@@ -29,10 +30,12 @@ class QuizActivity : AppCompatActivity() {
     private var mQuestionPosition: Int = 1
     private var mCorrectCount: Int = 0
     private var mWrongCount: Int = 0
+    private var qResult: QuizResult? = null
+    private var categoryId: Int? = 1
     private val client: OkHttpClient = OkHttpClient()
     private lateinit var vocalSound: MediaPlayer
 
-    private fun fetchQuestions(categoryId: Int): Job = lifecycleScope.launch {
+    private fun fetchQuestions(): Job = lifecycleScope.launch {
         withContext(Dispatchers.IO) {
             try {
                 // Build request
@@ -67,14 +70,14 @@ class QuizActivity : AppCompatActivity() {
         // Set the game type passed from menu
         mGameTypes = intent.getStringExtra("quizType").toString()
 
-        // Get fetchQuestions job
-        val fetchJob = when (mGameTypes) {
-            "Angka" -> fetchQuestions(1)
-            else -> fetchQuestions(2)
+        // Set Category Id
+        categoryId = when (mGameTypes) {
+            "Angka" -> 1
+            else -> 2
         }
         // Run Coroutine with join the fetchJob and update ui
         lifecycleScope.launch(Dispatchers.Main) {
-            fetchJob.join()
+            fetchQuestions().join()
             // Get Initialize Question From Questions Fetching
             val question = mQuestions[mQuestionPosition - 1]
             // Play Vocal Sound
@@ -93,11 +96,13 @@ class QuizActivity : AppCompatActivity() {
             binding.option4.text = question.optionFour
         }
 
+        createResultInstance()
+
         // Home Button
         binding.homeButton.setOnClickListener {
             if (vocalSound.isPlaying) {
                 vocalSound.stop()
-                vocalSound.release()
+                vocalSound.reset()
             }
             val intent = Intent(this, MainActivity::class.java)
             startActivity(intent)
@@ -112,7 +117,7 @@ class QuizActivity : AppCompatActivity() {
     override fun onBackPressed() {
         if (vocalSound.isPlaying) {
             vocalSound.stop()
-            vocalSound.release()
+            vocalSound.reset()
         }
         super.onBackPressed()
     }
@@ -126,7 +131,7 @@ class QuizActivity : AppCompatActivity() {
         optionSound.isLooping = false
         if (vocalSound.isPlaying) {
             vocalSound.stop()
-            vocalSound.release()
+            vocalSound.reset()
         }
 
         if (optionSound.isPlaying) optionSound.reset()
@@ -142,6 +147,16 @@ class QuizActivity : AppCompatActivity() {
                 mWrongCount++
             }
         }
+        val oldQuestion = mQuestions[mQuestionPosition - 1]
+        postResultDetail(
+            oldQuestion.id,
+            oldQuestion.optionOne,
+            oldQuestion.optionTwo,
+            oldQuestion.optionThree,
+            oldQuestion.optionFour,
+            radioButton.text.toString(),
+        )
+
         // Check if position is last of questions list
         if (mQuestionPosition == mQuestions.size) {
             val intent = Intent(this, QuizResultActivity::class.java)
@@ -157,6 +172,7 @@ class QuizActivity : AppCompatActivity() {
         mQuestionPosition++
         // Set new question data from questions according to position
         val question = mQuestions[mQuestionPosition - 1]
+
         playVocalSound(question.answer).start()
         // Update UI
         binding.correctCount.text = getString(R.string.correct_count, mCorrectCount)
@@ -170,9 +186,65 @@ class QuizActivity : AppCompatActivity() {
         binding.option4.text = question.optionFour
     }
 
+    private fun createResultInstance() {
+        lifecycleScope.launchWhenCreated {
+
+            withContext(Dispatchers.IO) {
+                val json = JSONObject()
+                json.put("id_kategori", "$categoryId")
+
+                val body = json.toString().toRequestBody(MEDIA_TYPE_JSON)
+
+                val request = Request.Builder()
+                    .url("http://${getString(R.string.ip_address)}/admin/api/create-result-instance.php")
+                    .post(body)
+                    .build()
+                val res = client.newCall(request).execute().body?.string()
+                qResult = Json.decodeFromString<QuizResult>(res!!)
+            }
+        }
+    }
+
+    private fun postResultDetail(
+        idPertanyaan: Int,
+        opsiSatu: String,
+        opsiDua: String,
+        opsiTiga: String,
+        opsiEmpat: String,
+        opsiDipilih: String
+    ) {
+        var json = JSONObject()
+        json.put("id_kategori", "$categoryId")
+        json.put("id_pertanyaan", "$idPertanyaan")
+        json.put("opsi_satu", opsiSatu)
+        json.put("opsi_dua", opsiDua)
+        json.put("opsi_tiga", opsiTiga)
+        json.put("opsi_empat", opsiEmpat)
+        json.put("opsi_dipilih", opsiDipilih)
+        json.put("id_hasil", "${qResult!!.id}")
+
+        val body = json.toString().toRequestBody(MEDIA_TYPE_JSON)
+
+        lifecycleScope.launch(Dispatchers.IO) {
+            val request = Request.Builder()
+                .url("http://${getString(R.string.ip_address)}/admin/api/save-result.php")
+                .post(body)
+                .build()
+
+            client.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) throw IOException("Unexpected code $response")
+
+                println(response.body!!.string())
+            }
+        }
+    }
+
+    companion object {
+        val MEDIA_TYPE_JSON = "application/json; charset=utf-8".toMediaType()
+    }
+
     private fun playVocalSound(answer: String?): MediaPlayer {
         val listArabicVocal = listOf(
-            ArabicVocal("a", R.raw.belajar_ain),
             ArabicVocal("١", R.raw.quiz_wahid),
             ArabicVocal("٢", R.raw.quiz_itsnani),
             ArabicVocal("٣", R.raw.quiz_tsalatsatun),
