@@ -1,6 +1,6 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
-    <style name="Theme.GameEdukasiAnakIslami.Dark" parent="Theme.MaterialComponents.Light.NoActionBar">
+    <style name="Theme.GameEdukasiAnakIslami" parent="Theme.MaterialComponents.Light.NoActionBar">
         <!-- Primary brand color. -->
         <item name="colorPrimary">@color/amber_400</item>
         <item name="colorPrimaryVariant">@color/amber_light</item>
@@ -13,5 +13,10 @@
         <!-- Status bar color. -->
         <item name="android:statusBarColor" tools:targetApi="l">?attr/colorPrimaryDark</item>
         <item name="fontFamily">@font/aladin</item>
+        <item name="android:fontFamily">@font/aladin</item>
+    </style>
+    <style name="TextAppearance.GameEdukasiAnak.Headline3" parent="TextAppearance.MaterialComponents.Headline3">
+        <item name="fontFamily">@font/aladin</item>
+        <item name="android:fontFamily">@font/aladin</item>
     </style>
 </resources>
