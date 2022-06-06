@@ -16,6 +16,7 @@
         <service
             android:name=".BackgroundMusic"
             android:enabled="true"
+            android:stopWithTask="true"
             android:exported="false" />
         <activity
             android:name=".QuizResultActivity"
