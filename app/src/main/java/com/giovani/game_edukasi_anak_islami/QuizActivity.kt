@@ -21,6 +21,7 @@ import okio.IOException
 import org.json.JSONObject
 
 
+@Suppress("BlockingMethodInNonBlockingContext")
 @SuppressLint("SetTextI18n")
 class QuizActivity : AppCompatActivity() {
 
@@ -35,31 +36,75 @@ class QuizActivity : AppCompatActivity() {
     private val client: OkHttpClient = OkHttpClient()
     private lateinit var vocalSound: MediaPlayer
 
-    private fun fetchQuestions(): Job = lifecycleScope.launch {
-        withContext(Dispatchers.IO) {
-            try {
-                // Build request
-                val request = Request.Builder()
-                    .url("http://${getString(R.string.ip_address)}/admin/api/read.php?id_kategori=$categoryId")
-                    .build()
-                // Execute request
-                @Suppress("BlockingMethodInNonBlockingContext") val res =
-                    client.newCall(request).execute().body?.string()
+    init {
+        lifecycleScope.launchWhenCreated {
+            withContext(Dispatchers.IO) {
+                try {
+                    val json = JSONObject()
+                    json.put("id_kategori", "$categoryId")
 
-                if (res != null) {
-                    try {
-                        // Parse result string JSON to data class
-                        mQuestions = Json.decodeFromString(res)
-                    } catch (err: Error) {
-                        print("Error when parsing JSON: " + err.localizedMessage)
-                    }
-                } else {
-                    print("Error: Get request returned no response")
+                    val body = json.toString().toRequestBody(MEDIA_TYPE_JSON)
+
+                    val request = Request.Builder()
+                        .url("http://${getString(R.string.ip_address)}/admin/api/create-result-instance.php")
+                        .post(body)
+                        .build()
+                    val res = client.newCall(request).execute().body?.string()
+                    qResult = Json.decodeFromString<QuizResult>(res!!)
+                } catch (err: Error) {
+                    print("Error when executing create instance of result: " + err.localizedMessage)
                 }
-            } catch (err: Error) {
-                print("Error when executing get request: " + err.localizedMessage)
+                try {
+                    // Build request
+                    val request = Request.Builder()
+                        .url("http://${getString(R.string.ip_address)}/admin/api/read.php?id_kategori=$categoryId")
+                        .build()
+                    // Execute request
+                    val res =
+                        client.newCall(request).execute().body?.string()
+
+                    if (res != null) {
+                        try {
+                            // Parse result string JSON to data class
+                            mQuestions = Json.decodeFromString(res)
+                            withContext(Dispatchers.Main) {
+                                // Get Initialize Question From Questions Fetching
+                                val question = mQuestions[mQuestionPosition - 1]
+                                // Play Vocal Sound
+                                playVocalSound(question.answer).start()
+
+                                // Initialize UI
+                                binding.gameTitle.text = getString(R.string.game_title, mGameTypes)
+                                binding.correctCount.text =
+                                    getString(R.string.correct_count, mCorrectCount)
+                                binding.wrongCount.text =
+                                    getString(R.string.wrong_count, mWrongCount)
+                                binding.questionText.text = question.question
+                                binding.questionPosition.text =
+                                    getString(
+                                        R.string.question_position,
+                                        mQuestionPosition,
+                                        mQuestions.size
+                                    )
+                                binding.option1.text = question.optionOne
+                                binding.option2.text = question.optionTwo
+                                binding.option3.text = question.optionThree
+                                binding.option4.text = question.optionFour
+                            }
+
+                        } catch (err: Error) {
+                            print("Error when parsing JSON: " + err.localizedMessage)
+                        }
+                    } else {
+                        print("Error: Get request returned no response")
+                    }
+                } catch (err: Error) {
+                    print("Error when executing get request questions : " + err.localizedMessage)
+                }
             }
+
         }
+
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -75,29 +120,6 @@ class QuizActivity : AppCompatActivity() {
             "Angka" -> 1
             else -> 2
         }
-        // Run Coroutine with join the fetchJob and update ui
-        lifecycleScope.launch(Dispatchers.Main) {
-            fetchQuestions().join()
-            // Get Initialize Question From Questions Fetching
-            val question = mQuestions[mQuestionPosition - 1]
-            // Play Vocal Sound
-            playVocalSound(question.answer).start()
-
-            // Initialize UI
-            binding.gameTitle.text = getString(R.string.game_title, mGameTypes)
-            binding.correctCount.text = getString(R.string.correct_count, mCorrectCount)
-            binding.wrongCount.text = getString(R.string.wrong_count, mWrongCount)
-            binding.questionText.text = question.question
-            binding.questionPosition.text =
-                getString(R.string.question_position, mQuestionPosition, mQuestions.size)
-            binding.option1.text = question.optionOne
-            binding.option2.text = question.optionTwo
-            binding.option3.text = question.optionThree
-            binding.option4.text = question.optionFour
-        }
-
-        createResultInstance()
-
         // Home Button
         binding.homeButton.setOnClickListener {
             if (vocalSound.isPlaying) {
@@ -119,6 +141,20 @@ class QuizActivity : AppCompatActivity() {
             vocalSound.stop()
             vocalSound.reset()
         }
+        if (mQuestionPosition != mQuestions.size) {
+            lifecycleScope.launch(Dispatchers.IO) {
+                try {
+                    val request = Request.Builder()
+                        .url("http://${getString(R.string.ip_address)}/admin/api/delete-result.php?id=${qResult?.id}")
+                        .build()
+                    client.newCall(request).execute()
+
+                } catch (err: Error) {
+                    print("Error delete the result : " + err.localizedMessage)
+                }
+            }
+        }
+
         super.onBackPressed()
     }
 
@@ -147,18 +183,40 @@ class QuizActivity : AppCompatActivity() {
                 mWrongCount++
             }
         }
-        val oldQuestion = mQuestions[mQuestionPosition - 1]
+
+        val isCorrect:Int = when (radioButton.text) {
+            mQuestions[mQuestionPosition - 1].answer -> 1
+            else -> 0
+        }
+
+        // Save per-question data to result detail table
         postResultDetail(
-            oldQuestion.id,
-            oldQuestion.optionOne,
-            oldQuestion.optionTwo,
-            oldQuestion.optionThree,
-            oldQuestion.optionFour,
+            mQuestions[mQuestionPosition - 1],
             radioButton.text.toString(),
+            isCorrect
         )
 
         // Check if position is last of questions list
         if (mQuestionPosition == mQuestions.size) {
+
+            val score: Int = (mCorrectCount * 100) / mQuestions.size
+
+            lifecycleScope.launch(Dispatchers.IO) {
+
+                var json = JSONObject()
+                json.put("id", qResult!!.id)
+                json.put("id_kategori", "$categoryId")
+                json.put("skor", score)
+                json.put("tgl_waktu", qResult!!.dateTime)
+
+                var body = json.toString().toRequestBody(MEDIA_TYPE_JSON)
+                var request = Request.Builder()
+                    .url("http://${getString(R.string.ip_address)}/admin/api/update-result.php")
+                    .post(body)
+                    .build()
+                client.newCall(request).execute()
+            }
+
             val intent = Intent(this, QuizResultActivity::class.java)
             intent.putExtra("corrects_count", mCorrectCount)
             intent.putExtra("wrongs_count", mWrongCount)
@@ -186,41 +244,20 @@ class QuizActivity : AppCompatActivity() {
         binding.option4.text = question.optionFour
     }
 
-    private fun createResultInstance() {
-        lifecycleScope.launchWhenCreated {
-
-            withContext(Dispatchers.IO) {
-                val json = JSONObject()
-                json.put("id_kategori", "$categoryId")
-
-                val body = json.toString().toRequestBody(MEDIA_TYPE_JSON)
-
-                val request = Request.Builder()
-                    .url("http://${getString(R.string.ip_address)}/admin/api/create-result-instance.php")
-                    .post(body)
-                    .build()
-                val res = client.newCall(request).execute().body?.string()
-                qResult = Json.decodeFromString<QuizResult>(res!!)
-            }
-        }
-    }
-
     private fun postResultDetail(
-        idPertanyaan: Int,
-        opsiSatu: String,
-        opsiDua: String,
-        opsiTiga: String,
-        opsiEmpat: String,
-        opsiDipilih: String
+        question: Question,
+        chosenAnswer: String,
+        isCorrect:Int
     ) {
-        var json = JSONObject()
+        val json = JSONObject()
         json.put("id_kategori", "$categoryId")
-        json.put("id_pertanyaan", "$idPertanyaan")
-        json.put("opsi_satu", opsiSatu)
-        json.put("opsi_dua", opsiDua)
-        json.put("opsi_tiga", opsiTiga)
-        json.put("opsi_empat", opsiEmpat)
-        json.put("opsi_dipilih", opsiDipilih)
+        json.put("id_pertanyaan", "${question.id}")
+        json.put("opsi_satu", question.optionOne)
+        json.put("opsi_dua", question.optionTwo)
+        json.put("opsi_tiga", question.optionThree)
+        json.put("opsi_empat", question.optionFour)
+        json.put("benar", isCorrect)
+        json.put("opsi_dipilih", chosenAnswer)
         json.put("id_hasil", "${qResult!!.id}")
 
         val body = json.toString().toRequestBody(MEDIA_TYPE_JSON)
