@@ -2,7 +2,6 @@ package com.giovani.game_edukasi_anak_islami
 
 import android.app.Service
 import android.content.Intent
-import android.content.res.AssetFileDescriptor
 import android.media.MediaPlayer
 import android.os.IBinder
 
@@ -20,22 +19,9 @@ class BackgroundMusic : Service() {
         bgMusic.setVolume(0.5f, 0.5f)
 
     }
-
-
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         bgMusic.start()
-        return START_NOT_STICKY
-    }
-    @Deprecated("Deprecated in Java")
-    override fun onStart(intent: Intent, startId: Int) {
-        // TO DO
-    }
-    fun onStop() {
-
-    }
-
-    fun onPause() {
-
+        return START_STICKY
     }
 
     override fun onDestroy() {
@@ -47,8 +33,6 @@ class BackgroundMusic : Service() {
 
     }
 
-    companion object {
-        private val TAG: String? = null
-    }
+
 
 }
