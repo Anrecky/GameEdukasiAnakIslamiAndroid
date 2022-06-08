@@ -17,7 +17,7 @@ class LearnDetailActivity : AppCompatActivity() {
         val data = intent.getStringExtra("item")
         var itemDesc = intent.getStringExtra("itemDescription")
         if (itemDesc!!.contains('(')) {
-            var index = itemDesc.indexOf('(')
+            val index = itemDesc.indexOf('(')
             itemDesc =
                 itemDesc.substring(0, index - 1) + "\n" + itemDesc.substring(index, itemDesc.length)
         }
