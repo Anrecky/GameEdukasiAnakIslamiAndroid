@@ -15,25 +15,31 @@
         android:name="com.giovani.game_edukasi_anak_islami.AboutFragment"
         android:label="fragment_about"
         tools:layout="@layout/fragment_about" />
-    <fragment
-        android:id="@+id/settingsFragment"
-        android:name="com.giovani.game_edukasi_anak_islami.SettingsFragment"
-        android:label="fragment_settings"
-        tools:layout="@layout/fragment_settings" />
+
     <fragment
         android:id="@+id/homeFragment"
         android:name="com.giovani.game_edukasi_anak_islami.HomeFragment"
         android:label="fragment_home"
-        tools:layout="@layout/fragment_home" >
+        tools:layout="@layout/fragment_home">
         <action
             android:id="@+id/action_homeFragment_to_startMenuFragment"
             app:destination="@id/startMenuFragment" />
         <action
-            android:id="@+id/action_homeFragment_to_settingsFragment"
-            app:destination="@id/settingsFragment" />
-        <action
             android:id="@+id/action_homeFragment_to_aboutFragment"
             app:destination="@id/aboutFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_fragmentContainerSettings"
+            app:destination="@id/fragmentContainerSettings" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/fragmentContainerSettings"
+        android:name="com.giovani.game_edukasi_anak_islami.FragmentContainerSettings"
+        android:label="fragment_container_settings"
+        tools:layout="@layout/fragment_container_settings" >
+        <action
+            android:id="@+id/action_fragmentContainerSettings_to_homeFragment"
+            app:destination="@id/homeFragment" />
     </fragment>
 
 
