@@ -16,11 +16,13 @@
         <entry key="app/src/main/res/layout/activity_quiz_result.xml" value="0.21784420289855072" />
         <entry key="app/src/main/res/layout/activity_splash.xml" value="0.17844202898550723" />
         <entry key="app/src/main/res/layout/fragment_about.xml" value="0.21784420289855072" />
+        <entry key="app/src/main/res/layout/fragment_container_settings.xml" value="0.20833333333333334" />
         <entry key="app/src/main/res/layout/fragment_home.xml" value="0.25" />
         <entry key="app/src/main/res/layout/fragment_settings.xml" value="0.21784420289855072" />
         <entry key="app/src/main/res/layout/fragment_start_menu.xml" value="0.25" />
         <entry key="app/src/main/res/layout/learn_detail_layout.xml" value="0.21784420289855072" />
         <entry key="app/src/main/res/menu/main_menu.xml" value="0.3098958333333333" />
+        <entry key="app/src/main/res/xml/root_preferences.xml" value="0.20833333333333334" />
       </map>
     </option>
   </component>
