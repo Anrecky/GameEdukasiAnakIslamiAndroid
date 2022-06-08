@@ -24,7 +24,7 @@ class QuizResultActivity : AppCompatActivity() {
         binding.score.text = getString(R.string.quiz_score, score)
         binding.homeButton.setOnClickListener {
             val intent = Intent(this, MainActivity::class.java)
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
             startActivity(intent)
             finish()
         }
