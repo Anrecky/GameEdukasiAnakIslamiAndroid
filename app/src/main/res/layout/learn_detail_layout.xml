@@ -7,6 +7,7 @@
 <!--    app:cardElevation="18dp">-->
 <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_gravity="center"
@@ -24,6 +25,7 @@
         android:text="ش"
         android:textColor="@android:color/black"
         android:textSize="40sp"
-        android:textStyle="bold" />
+        android:textStyle="bold"
+        tools:ignore="HardcodedText" />
 
 </androidx.cardview.widget.CardView>
