@@ -1,5 +1,6 @@
 package com.giovani.game_edukasi_anak_islami
 
+import android.annotation.SuppressLint
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -22,6 +23,7 @@ class LearnActivity : AppCompatActivity(), RecyclerViewClickListener {
     private lateinit var learnAdapter: LearnAdapter
     private val client: OkHttpClient = OkHttpClient()
 
+    @SuppressLint("NotifyDataSetChanged")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_learn)
