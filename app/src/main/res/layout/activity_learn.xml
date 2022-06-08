@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FFC107"
+    android:background="?colorPrimary"
     android:layout_gravity="center"
     tools:context=".LearnActivity">
     <TextView
@@ -27,7 +27,7 @@
         android:shadowRadius="20"
         android:shadowColor="@color/black"
         android:textAlignment="center"
-        />
+        tools:ignore="HardcodedText" />
     <androidx.recyclerview.widget.RecyclerView
         android:padding="10dp"
         android:id="@+id/recyclerView"
