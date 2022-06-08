@@ -1,0 +1,19 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <SeekBarPreference
+        android:key="quizVolume"
+        android:max="100"
+        app:defaultValue="100"
+        app:key="quizVolume"
+        app:showSeekBarValue="true"
+        app:title="Atur Volume Suara Kuis" />
+    <SeekBarPreference
+        android:defaultValue="50"
+        android:max="100"
+        app:defaultValue="50"
+        app:key="bgVolume"
+        app:showSeekBarValue="true"
+        app:title="Atur Volume Musik Latarbelakang" />
+
+</PreferenceScreen>
