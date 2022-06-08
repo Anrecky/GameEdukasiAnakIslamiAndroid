@@ -11,7 +11,7 @@ import com.giovani.game_edukasi_anak_islami.data.Question
 
 class LearnAdapter(var context: Context) : RecyclerView.Adapter<LearnAdapter.ViewHolder>() {
 
-    var dataList = emptyList<Question>()
+    private var dataList = emptyList<Question>()
 
     var listener: RecyclerViewClickListener? = null
 
@@ -25,7 +25,7 @@ class LearnAdapter(var context: Context) : RecyclerView.Adapter<LearnAdapter.Vie
     }
 
     override fun onBindViewHolder(holder: LearnAdapter.ViewHolder, position: Int) {
-        var data = dataList[position]
+        val data = dataList[position]
         holder.menuItem.text = data.answer
         holder.menuItem.setOnClickListener {
             listener?.onItemClicked(it, data)
