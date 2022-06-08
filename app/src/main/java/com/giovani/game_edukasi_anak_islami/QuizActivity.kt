@@ -2,11 +2,13 @@ package com.giovani.game_edukasi_anak_islami
 
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.content.SharedPreferences
 import android.media.MediaPlayer
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.RadioButton
 import androidx.lifecycle.lifecycleScope
+import androidx.preference.PreferenceManager
 import com.giovani.game_edukasi_anak_islami.data.ArabicVocal
 import com.giovani.game_edukasi_anak_islami.data.Question
 import com.giovani.game_edukasi_anak_islami.data.QuizResult
@@ -35,6 +37,7 @@ class QuizActivity : AppCompatActivity() {
     private var categoryId: Int? = 1
     private val client: OkHttpClient = OkHttpClient()
     private lateinit var vocalSound: MediaPlayer
+    private var vocalVolume: Float = 1.0F
 
     init {
         lifecycleScope.launchWhenCreated {
@@ -112,6 +115,10 @@ class QuizActivity : AppCompatActivity() {
         binding = ActivityQuizBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        // Preferences
+        val prefs = PreferenceManager.getDefaultSharedPreferences(this)
+        vocalVolume = (prefs.getInt("quizVolume", 100).toFloat()) / 100
+
         // Set the game type passed from menu
         mGameTypes = intent.getStringExtra("quizType").toString()
 
@@ -184,7 +191,7 @@ class QuizActivity : AppCompatActivity() {
             }
         }
 
-        val isCorrect:Int = when (radioButton.text) {
+        val isCorrect: Int = when (radioButton.text) {
             mQuestions[mQuestionPosition - 1].answer -> 1
             else -> 0
         }
@@ -203,14 +210,14 @@ class QuizActivity : AppCompatActivity() {
 
             lifecycleScope.launch(Dispatchers.IO) {
 
-                var json = JSONObject()
+                val json = JSONObject()
                 json.put("id", qResult!!.id)
                 json.put("id_kategori", "$categoryId")
                 json.put("skor", score)
                 json.put("tgl_waktu", qResult!!.dateTime)
 
-                var body = json.toString().toRequestBody(MEDIA_TYPE_JSON)
-                var request = Request.Builder()
+                val body = json.toString().toRequestBody(MEDIA_TYPE_JSON)
+                val request = Request.Builder()
                     .url("http://${getString(R.string.ip_address)}/admin/api/update-result.php")
                     .post(body)
                     .build()
@@ -247,7 +254,7 @@ class QuizActivity : AppCompatActivity() {
     private fun postResultDetail(
         question: Question,
         chosenAnswer: String,
-        isCorrect:Int
+        isCorrect: Int
     ) {
         val json = JSONObject()
         json.put("id_kategori", "$categoryId")
@@ -325,6 +332,7 @@ class QuizActivity : AppCompatActivity() {
             applicationContext,
             listArabicVocal.find { it.arabic == answer }!!.rawInt
         )
+        vocalSound.setVolume(vocalVolume, vocalVolume)
         vocalSound.isLooping = false
 
         return this.vocalSound
