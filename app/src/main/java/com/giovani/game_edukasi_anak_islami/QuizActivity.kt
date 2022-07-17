@@ -2,7 +2,6 @@ package com.giovani.game_edukasi_anak_islami
 
 import android.annotation.SuppressLint
 import android.content.Intent
-import android.content.SharedPreferences
 import android.media.MediaPlayer
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -166,6 +165,7 @@ class QuizActivity : AppCompatActivity() {
     }
 
     private fun onOptionClicked(radioButton: RadioButton) {
+
         val optionSound = when (radioButton.text) {
             mQuestions[mQuestionPosition - 1].answer -> MediaPlayer.create(this, R.raw.correct)
             else -> MediaPlayer.create(this, R.raw.wrong)
@@ -183,72 +183,130 @@ class QuizActivity : AppCompatActivity() {
         when (radioButton.text) {
             mQuestions[mQuestionPosition - 1].answer -> {
                 optionSound.start()
+
+                // Save per-question data to result detail table
+                postResultDetail(
+                    mQuestions[mQuestionPosition - 1],
+                    radioButton.text.toString(),
+                    1
+                )
+
                 mCorrectCount++
+
+                // Check if position is last of questions list
+                if (mQuestionPosition == mQuestions.size) {
+
+                    val score: Int = (mCorrectCount * 100) / mQuestions.size
+
+                    lifecycleScope.launch(Dispatchers.IO) {
+
+                        val json = JSONObject()
+                        json.put("id", qResult!!.id)
+                        json.put("id_kategori", "$categoryId")
+                        json.put("skor", score)
+                        json.put("tgl_waktu", qResult!!.dateTime)
+
+                        val body = json.toString().toRequestBody(MEDIA_TYPE_JSON)
+                        val request = Request.Builder()
+                            .url("http://${getString(R.string.ip_address)}/admin/api/update-result.php")
+                            .post(body)
+                            .build()
+                        client.newCall(request).execute()
+                    }
+
+                    val intent = Intent(this, QuizResultActivity::class.java)
+                    intent.putExtra("corrects_count", mCorrectCount)
+                    intent.putExtra("wrongs_count", mWrongCount)
+                    intent.putExtra("game_title", mGameTypes)
+                    intent.putExtra("total_questions", mQuestions.size)
+                    startActivity(intent)
+                    finish()
+                    return
+                }
+
+                // Increment Current Position Of Question From Question List
+                mQuestionPosition++
+                // Set new question data from questions according to position
+                val question = mQuestions[mQuestionPosition - 1]
+
+                playVocalSound(question.answer).start()
+                // Update UI
+                binding.correctCount.text = getString(R.string.correct_count, mCorrectCount)
+                binding.wrongCount.text = getString(R.string.wrong_count, mWrongCount)
+                binding.questionText.text = question.question
+                binding.questionPosition.text =
+                    getString(R.string.question_position, mQuestionPosition, mQuestions.size)
+                binding.option1.text = question.optionOne
+                binding.option2.text = question.optionTwo
+                binding.option3.text = question.optionThree
+                binding.option4.text = question.optionFour
+
             }
             else -> {
                 optionSound.start()
-                mWrongCount++
+                // mWrongCount++
             }
         }
 
-        val isCorrect: Int = when (radioButton.text) {
-            mQuestions[mQuestionPosition - 1].answer -> 1
-            else -> 0
-        }
+//        val isCorrect: Int = when (radioButton.text) {
+//            mQuestions[mQuestionPosition - 1].answer -> 1
+//            else -> 0
+//        }
+//
+//        // Save per-question data to result detail table
+//        postResultDetail(
+//            mQuestions[mQuestionPosition - 1],
+//            radioButton.text.toString(),
+//            isCorrect
+//        )
 
-        // Save per-question data to result detail table
-        postResultDetail(
-            mQuestions[mQuestionPosition - 1],
-            radioButton.text.toString(),
-            isCorrect
-        )
+//        // Check if position is last of questions list
+//        if (mQuestionPosition == mQuestions.size) {
+//
+//            val score: Int = (mCorrectCount * 100) / mQuestions.size
+//
+//            lifecycleScope.launch(Dispatchers.IO) {
+//
+//                val json = JSONObject()
+//                json.put("id", qResult!!.id)
+//                json.put("id_kategori", "$categoryId")
+//                json.put("skor", score)
+//                json.put("tgl_waktu", qResult!!.dateTime)
+//
+//                val body = json.toString().toRequestBody(MEDIA_TYPE_JSON)
+//                val request = Request.Builder()
+//                    .url("http://${getString(R.string.ip_address)}/admin/api/update-result.php")
+//                    .post(body)
+//                    .build()
+//                client.newCall(request).execute()
+//            }
+//
+//            val intent = Intent(this, QuizResultActivity::class.java)
+//            intent.putExtra("corrects_count", mCorrectCount)
+//            intent.putExtra("wrongs_count", mWrongCount)
+//            intent.putExtra("game_title", mGameTypes)
+//            intent.putExtra("total_questions", mQuestions.size)
+//            startActivity(intent)
+//            finish()
+//            return
+//        }
 
-        // Check if position is last of questions list
-        if (mQuestionPosition == mQuestions.size) {
-
-            val score: Int = (mCorrectCount * 100) / mQuestions.size
-
-            lifecycleScope.launch(Dispatchers.IO) {
-
-                val json = JSONObject()
-                json.put("id", qResult!!.id)
-                json.put("id_kategori", "$categoryId")
-                json.put("skor", score)
-                json.put("tgl_waktu", qResult!!.dateTime)
-
-                val body = json.toString().toRequestBody(MEDIA_TYPE_JSON)
-                val request = Request.Builder()
-                    .url("http://${getString(R.string.ip_address)}/admin/api/update-result.php")
-                    .post(body)
-                    .build()
-                client.newCall(request).execute()
-            }
-
-            val intent = Intent(this, QuizResultActivity::class.java)
-            intent.putExtra("corrects_count", mCorrectCount)
-            intent.putExtra("wrongs_count", mWrongCount)
-            intent.putExtra("game_title", mGameTypes)
-            intent.putExtra("total_questions", mQuestions.size)
-            startActivity(intent)
-            finish()
-            return
-        }
-        // Increment Current Position Of Question From Question List
-        mQuestionPosition++
-        // Set new question data from questions according to position
-        val question = mQuestions[mQuestionPosition - 1]
-
-        playVocalSound(question.answer).start()
-        // Update UI
-        binding.correctCount.text = getString(R.string.correct_count, mCorrectCount)
-        binding.wrongCount.text = getString(R.string.wrong_count, mWrongCount)
-        binding.questionText.text = question.question
-        binding.questionPosition.text =
-            getString(R.string.question_position, mQuestionPosition, mQuestions.size)
-        binding.option1.text = question.optionOne
-        binding.option2.text = question.optionTwo
-        binding.option3.text = question.optionThree
-        binding.option4.text = question.optionFour
+//        // Increment Current Position Of Question From Question List
+//        mQuestionPosition++
+//        // Set new question data from questions according to position
+//        val question = mQuestions[mQuestionPosition - 1]
+//
+//        playVocalSound(question.answer).start()
+//        // Update UI
+//        binding.correctCount.text = getString(R.string.correct_count, mCorrectCount)
+//        binding.wrongCount.text = getString(R.string.wrong_count, mWrongCount)
+//        binding.questionText.text = question.question
+//        binding.questionPosition.text =
+//            getString(R.string.question_position, mQuestionPosition, mQuestions.size)
+//        binding.option1.text = question.optionOne
+//        binding.option2.text = question.optionTwo
+//        binding.option3.text = question.optionThree
+//        binding.option4.text = question.optionFour
     }
 
     private fun postResultDetail(
