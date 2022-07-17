@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.giovani.game_edukasi_anak_islami.data.ArabicVocal
+import java.util.*
 
 class LearnDetailActivity : AppCompatActivity() {
 
@@ -16,11 +17,29 @@ class LearnDetailActivity : AppCompatActivity() {
 
         val data = intent.getStringExtra("item")
         var itemDesc = intent.getStringExtra("itemDescription")
+
+        fun String.replace(mapping: Map<String, String>): String {
+            var str = this
+            mapping.forEach { str = str.replace(it.key, it.value) }
+            return str
+        }
+
         if (itemDesc!!.contains('(')) {
             val index = itemDesc.indexOf('(')
-            itemDesc =
-                itemDesc.substring(0, index - 1) + "\n" + itemDesc.substring(index, itemDesc.length)
+            val mapping = mapOf("(" to "", ")" to "")
+            itemDesc = "${((itemDesc.substring(index,itemDesc.length)).replace(mapping)).replaceFirstChar {
+                if (it.isLowerCase()) it.titlecase(
+                    Locale.getDefault()
+                ) else it.toString()
+            }} Adalah Angka ${itemDesc.substring(0, index - 1)}"
+        }else{
+            itemDesc = "Huruf ${itemDesc.replaceFirstChar {
+                if (it.isLowerCase()) it.titlecase(
+                    Locale.getDefault()
+                ) else it.toString()
+            }}"
         }
+
 
         val txtV: TextView = findViewById(R.id.arabic)
         val txtDesc: TextView = findViewById(R.id.description)
